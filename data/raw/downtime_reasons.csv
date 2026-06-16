@@ -1,0 +1,11 @@
+reason_id,reason_description,reason_category
+R01,Setup / troca de molde,Planejada
+R02,Manutenção preventiva,Planejada
+R03,Parada programada,Planejada
+R04,Quebra mecânica,Não planejada
+R05,Falta de material,Não planejada
+R06,Ajuste de processo,Não planejada
+R07,Falha elétrica,Não planejada
+R08,Falta de operador,Não planejada
+R09,Pequenas paradas,Não planejada
+R10,Limpeza,Planejada

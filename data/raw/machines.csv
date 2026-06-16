@@ -1,0 +1,7 @@
+machine_id,machine_name,production_line,ideal_cycle_time_sec
+M01,Extrusora A,Linha 1,12
+M02,Extrusora B,Linha 1,12
+M03,Prensa 1,Linha 1,20
+M04,Prensa 2,Linha 2,20
+M05,Montadora,Linha 2,8
+M06,Embaladora,Linha 2,5

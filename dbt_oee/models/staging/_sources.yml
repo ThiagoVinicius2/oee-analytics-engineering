@@ -1,0 +1,14 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Dados brutos exportados do sistema MES da fábrica."
+    schema: raw
+    tables:
+      - name: machines
+      - name: products
+      - name: operators
+      - name: shifts
+      - name: downtime_reasons
+      - name: production_runs
+      - name: downtime_events

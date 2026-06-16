@@ -1,0 +1,22 @@
+# Data warehouse DuckDB (gerado por load_to_duckdb.py)
+warehouse/*.duckdb
+
+# Artefatos do dbt
+dbt_oee/target/
+dbt_oee/dbt_packages/
+dbt_oee/logs/
+dbt_oee/.user.yml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Ambiente Replit
+.pythonlibs/
+.config/
+.cache/
+.upm/
+.breakpoints

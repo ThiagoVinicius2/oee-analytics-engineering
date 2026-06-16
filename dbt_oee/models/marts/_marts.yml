@@ -1,0 +1,88 @@
+version: 2
+
+models:
+  - name: dim_machines
+    description: "Dimensão de máquinas, com linha de produção e tempo de ciclo ideal."
+    columns:
+      - name: machine_id
+        description: "Chave primária da máquina."
+        tests: [unique, not_null]
+
+  - name: dim_products
+    description: "Dimensão de produtos fabricados."
+    columns:
+      - name: product_id
+        tests: [unique, not_null]
+
+  - name: dim_operators
+    description: "Dimensão de operadores, vinculados a um turno."
+    columns:
+      - name: operator_id
+        tests: [unique, not_null]
+
+  - name: dim_shifts
+    description: "Dimensão de turnos de trabalho."
+    columns:
+      - name: shift_id
+        tests: [unique, not_null]
+
+  - name: dim_downtime_reasons
+    description: "Dimensão de motivos de parada (planejada / não planejada)."
+    columns:
+      - name: reason_id
+        tests: [unique, not_null]
+      - name: reason_category
+        description: "Categoria da parada."
+        tests:
+          - accepted_values:
+              values: ['Planejada', 'Não planejada']
+
+  - name: dim_dates
+    description: "Dimensão de calendário, gerada a partir do período de produção."
+    columns:
+      - name: date_day
+        tests: [unique, not_null]
+
+  - name: fct_production
+    description: >
+      Fato de produção (grão = uma corrida). Contém os componentes do OEE:
+      Availability, Performance, Quality e o OEE final.
+    columns:
+      - name: run_id
+        description: "Chave primária da corrida de produção."
+        tests: [unique, not_null]
+      - name: machine_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_machines')
+              field: machine_id
+      - name: product_id
+        tests:
+          - relationships:
+              to: ref('dim_products')
+              field: product_id
+      - name: operator_id
+        tests:
+          - relationships:
+              to: ref('dim_operators')
+              field: operator_id
+      - name: oee
+        description: "OEE = Availability x Performance x Quality (0 a 1)."
+        tests: [not_null]
+
+  - name: fct_downtime
+    description: "Fato de paradas (grão = um evento de parada)."
+    columns:
+      - name: event_id
+        tests: [unique, not_null]
+      - name: machine_id
+        tests:
+          - relationships:
+              to: ref('dim_machines')
+              field: machine_id
+      - name: reason_id
+        tests:
+          - relationships:
+              to: ref('dim_downtime_reasons')
+              field: reason_id
