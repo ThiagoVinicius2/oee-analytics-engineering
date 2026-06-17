@@ -18,10 +18,7 @@ Este projeto simula a exportação de um sistema MES (*Manufacturing Execution S
 
 ## Arquitetura
 
-```
-CSVs (MES)  ->  Python        ->  DuckDB           ->  dbt           ->  Dashboard
-                (Extract/Load)     (Data Warehouse)     (Transform)
-```
+![Arquitetura do pipeline](docs/architecture.png)
 
 | Camada          | Ferramenta       | Responsabilidade                          |
 |-----------------|------------------|-------------------------------------------|
@@ -41,6 +38,12 @@ CSVs (MES)  ->  Python        ->  DuckDB           ->  dbt           ->  Dashboa
 
 A qualidade do modelo é garantida por **24 testes** automatizados do dbt (chaves únicas, integridade referencial entre fatos e dimensões e validação de domínios).
 
+## Linhagem dos dados (dbt)
+
+O grafo de dependências (lineage) gerado automaticamente pelo dbt mostra o fluxo completo, das fontes `raw` até os marts:
+
+![Lineage graph do dbt](docs/lineage_graph.png)
+
 ## Principais resultados
 
 - **OEE geral da fábrica: 71,6%** — dentro da faixa típica da indústria ("world class" = 85%).
@@ -52,20 +55,11 @@ A qualidade do modelo é garantida por **24 testes** automatizados do dbt (chave
 Pré-requisitos: Python 3.11+
 
 ```bash
-# 1. Instalar as dependências
 pip install -r requirements.txt
-
-# 2. Gerar os dados brutos (CSVs que simulam o export do MES)
 python ingestion/generate_data.py
-
-# 3. Carregar os dados no data warehouse DuckDB
 python ingestion/load_to_duckdb.py
-
-# 4. Construir e testar o modelo dimensional
 cd dbt_oee
 dbt build
-
-# 5. (Opcional) Gerar a documentação navegável do dbt
 dbt docs generate && dbt docs serve
 ```
 
@@ -88,15 +82,9 @@ oee:
 ```
 .
 ├── ingestion/          # scripts de geração e carga (Python)
-│   ├── generate_data.py
-│   └── load_to_duckdb.py
 ├── data/raw/           # dados brutos em CSV
 ├── warehouse/          # data warehouse DuckDB (gerado, fora do Git)
-├── dbt_oee/            # projeto dbt
-│   ├── models/
-│   │   ├── staging/    # limpeza 1:1 (views)
-│   │   └── marts/      # star schema (tables)
-│   └── macros/
+├── dbt_oee/            # projeto dbt (staging + marts)
 └── docs/               # documentação e imagens
 ```
 
