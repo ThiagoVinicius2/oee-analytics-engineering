@@ -50,7 +50,7 @@ O grafo de dependências (lineage) gerado automaticamente pelo dbt mostra o flux
 
 A camada de visualização foi construída no Qlik Sense, consumindo os marts exportados do dbt/DuckDB.
 
-![Dashboard de OEE](docs/dashboard.png)
+![Dashboard de OEE](docs/Dashboard_OEE.png)
 
 O painel cobre:
 - **KPIs** de OEE e seus três componentes (Disponibilidade, Performance, Qualidade)
