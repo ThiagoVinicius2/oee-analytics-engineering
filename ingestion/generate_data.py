@@ -1,6 +1,18 @@
 """
 Gerador de dados sintéticos — simula a exportação de um sistema MES
 (Manufacturing Execution System) de uma fábrica.
+
+Produz 7 tabelas-fonte em CSV (5 dimensões + 2 fatos):
+  - machines.csv          (dimensão: máquinas)
+  - products.csv          (dimensão: produtos)
+  - operators.csv         (dimensão: operadores)
+  - shifts.csv            (dimensão: turnos)
+  - downtime_reasons.csv  (dimensão: motivos de parada)
+  - production_runs.csv    (fato: um registro por corrida de produção)
+  - downtime_events.csv    (fato: um registro por evento de parada)
+
+Os dados são realistas o bastante para calcular OEE
+(Availability x Performance x Quality), Pareto de paradas e MTBF/MTTR.
 """
 
 import os
@@ -17,7 +29,9 @@ np.random.seed(SEED)
 OUT = "data/raw"
 os.makedirs(OUT, exist_ok=True)
 
+# ----------------------------------------------------------------------
 # 1) DIMENSÃO: turnos
+# ----------------------------------------------------------------------
 shifts = pd.DataFrame(
     [
         {"shift_id": "T1", "shift_name": "Manhã", "start_hour": 6, "end_hour": 14},
@@ -26,15 +40,24 @@ shifts = pd.DataFrame(
     ]
 )
 
+# ----------------------------------------------------------------------
 # 2) DIMENSÃO: máquinas (cada uma com um perfil de desempenho próprio)
+# ----------------------------------------------------------------------
 machines = pd.DataFrame(
     [
-        ("M01", "Extrusora A", "Linha 1", 12, 0.90, 0.95, 0.98),
-        ("M02", "Extrusora B", "Linha 1", 12, 0.82, 0.90, 0.96),
-        ("M03", "Prensa 1", "Linha 1", 20, 0.88, 0.93, 0.97),
-        ("M04", "Prensa 2", "Linha 2", 20, 0.78, 0.88, 0.94),
-        ("M05", "Montadora", "Linha 2", 8, 0.92, 0.96, 0.99),
-        ("M06", "Embaladora", "Linha 2", 5, 0.85, 0.91, 0.97),
+        # id   nome             linha       ciclo(s) avail perf  qual
+        ("M01", "Extrusora A",  "Linha 1", 12, 0.90, 0.95, 0.98),
+        ("M02", "Extrusora B",  "Linha 1", 12, 0.82, 0.90, 0.96),
+        ("M03", "Prensa 1",     "Linha 1", 20, 0.88, 0.93, 0.97),
+        ("M04", "Prensa 2",     "Linha 2", 20, 0.78, 0.88, 0.94),  # máquina-problema
+        ("M05", "Montadora",    "Linha 2",  8, 0.92, 0.96, 0.99),
+        ("M06", "Embaladora",   "Linha 2",  5, 0.85, 0.91, 0.97),
+        ("M07", "Injetora A",   "Linha 3", 15, 0.87, 0.92, 0.97),
+        ("M08", "Injetora B",   "Linha 3", 15, 0.80, 0.89, 0.95),
+        ("M09", "Cortadeira",   "Linha 3", 10, 0.89, 0.94, 0.98),
+        ("M10", "Soldadora",    "Linha 2", 18, 0.83, 0.90, 0.96),
+        ("M11", "Forno",        "Linha 1", 25, 0.91, 0.93, 0.98),
+        ("M12", "Pintura",      "Linha 3", 30, 0.76, 0.87, 0.93),  # 2ª máquina-problema
     ],
     columns=[
         "machine_id", "machine_name", "production_line",
@@ -42,22 +65,27 @@ machines = pd.DataFrame(
     ],
 )
 
+# ----------------------------------------------------------------------
 # 3) DIMENSÃO: produtos
+# ----------------------------------------------------------------------
 products = pd.DataFrame(
     [
-        ("P01", "Pneu Aro 15", "Pneus"),
-        ("P02", "Pneu Aro 16", "Pneus"),
-        ("P03", "Câmara de ar", "Acessórios"),
-        ("P04", "Protetor de aro", "Acessórios"),
+        ("P01", "Pneu Aro 15",      "Pneus"),
+        ("P02", "Pneu Aro 16",      "Pneus"),
+        ("P03", "Câmara de ar",     "Acessórios"),
+        ("P04", "Protetor de aro",  "Acessórios"),
         ("P05", "Borracha vulcan.", "Matéria-prima"),
     ],
     columns=["product_id", "product_name", "product_category"],
 )
 
+# ----------------------------------------------------------------------
 # 4) DIMENSÃO: operadores (cada um pertence a um turno)
+# ----------------------------------------------------------------------
 first_names = [
     "Ana", "Bruno", "Carla", "Diego", "Elaine", "Felipe",
     "Gabriela", "Henrique", "Iara", "João", "Karen", "Lucas",
+    "Mariana", "Nelson", "Olívia", "Paulo", "Rafaela", "Sérgio",
 ]
 op_rows = []
 for i, nome in enumerate(first_names):
@@ -70,19 +98,28 @@ for i, nome in enumerate(first_names):
     )
 operators = pd.DataFrame(op_rows)
 
-# 5) DIMENSÃO: motivos de parada (categoria + peso para gerar um Pareto)
+# ----------------------------------------------------------------------
+# 5) DIMENSÃO: motivos de parada (com categoria planejada/não planejada
+#    e peso para gerar um Pareto realista)
+# ----------------------------------------------------------------------
 downtime_reasons = pd.DataFrame(
     [
-        ("R01", "Setup / troca de molde", "Planejada", 15, 25),
-        ("R02", "Manutenção preventiva", "Planejada", 5, 45),
-        ("R03", "Parada programada", "Planejada", 8, 20),
-        ("R04", "Quebra mecânica", "Não planejada", 12, 40),
-        ("R05", "Falta de material", "Não planejada", 18, 18),
-        ("R06", "Ajuste de processo", "Não planejada", 14, 12),
-        ("R07", "Falha elétrica", "Não planejada", 7, 35),
-        ("R08", "Falta de operador", "Não planejada", 6, 22),
-        ("R09", "Pequenas paradas", "Não planejada", 20, 5),
-        ("R10", "Limpeza", "Planejada", 9, 10),
+        # id    descrição                 categoria          peso  dur_média(min)
+        ("R01", "Setup / troca de molde", "Planejada",       15,   25),
+        ("R02", "Manutenção preventiva",  "Planejada",        5,   45),
+        ("R03", "Parada programada",      "Planejada",        8,   20),
+        ("R04", "Quebra mecânica",        "Não planejada",   12,   40),
+        ("R05", "Falta de material",      "Não planejada",   18,   18),
+        ("R06", "Ajuste de processo",     "Não planejada",   14,   12),
+        ("R07", "Falha elétrica",         "Não planejada",    7,   35),
+        ("R08", "Falta de operador",      "Não planejada",    6,   22),
+        ("R09", "Pequenas paradas",       "Não planejada",   20,    5),
+        ("R10", "Limpeza",                "Planejada",        9,   10),
+        ("R11", "Troca de turno",         "Planejada",        7,    8),
+        ("R12", "Inspeção de qualidade",  "Não planejada",    6,   15),
+        ("R13", "Falha de sensor",        "Não planejada",    5,   20),
+        ("R14", "Reabastecimento",        "Não planejada",   10,    8),
+        ("R15", "Calibração",             "Planejada",        4,   18),
     ],
     columns=[
         "reason_id", "reason_description", "reason_category",
@@ -95,10 +132,12 @@ reason_weights = np.array(downtime_reasons["_weight"], dtype=float)
 reason_weights = reason_weights / reason_weights.sum()
 reason_avg = dict(zip(downtime_reasons["reason_id"], downtime_reasons["_avg_duration_min"]))
 
+# ----------------------------------------------------------------------
 # 6) FATOS: corridas de produção + eventos de parada
-PLANNED_TIME_MIN = 480
-START_DATE = date(2025, 1, 1)
-NUM_DAYS = 180
+# ----------------------------------------------------------------------
+PLANNED_TIME_MIN = 480          # 8 horas por turno
+START_DATE = date(2024, 7, 1)
+NUM_DAYS = 548                   # ~18 meses
 
 prod_rows = []
 event_rows = []
@@ -107,10 +146,12 @@ event_counter = 0
 
 for d in range(NUM_DAYS):
     current = START_DATE + timedelta(days=d)
+    # fins de semana têm produção reduzida
     is_weekend = current.weekday() >= 5
 
     for _, shift in shifts.iterrows():
         for _, m in machines.iterrows():
+            # nem toda máquina roda em todo turno
             schedule_prob = 0.55 if is_weekend else 0.9
             if random.random() > schedule_prob:
                 continue
@@ -118,6 +159,9 @@ for d in range(NUM_DAYS):
             run_counter += 1
             run_id = f"RUN{run_counter:05d}"
 
+            # --- paradas desta corrida ---
+            # a disponibilidade-alvo depende do perfil da máquina:
+            # máquina-problema (avail_base baixo) acumula mais paradas
             target_avail = float(
                 np.clip(np.random.normal(m["avail_base"], 0.05), 0.55, 0.99)
             )
@@ -132,6 +176,7 @@ for d in range(NUM_DAYS):
                 run_events.append((reason, dur))
                 total_downtime += dur
 
+            # limita a parada a no máximo 45% do tempo planejado
             cap = int(PLANNED_TIME_MIN * 0.45)
             if total_downtime > cap:
                 fator = cap / total_downtime
@@ -140,6 +185,7 @@ for d in range(NUM_DAYS):
 
             run_time = PLANNED_TIME_MIN - total_downtime
 
+            # --- contagem de peças (Performance e Quality) ---
             perf = float(np.clip(np.random.normal(m["perf_base"], 0.04), 0.6, 1.0))
             qual = float(np.clip(np.random.normal(m["qual_base"], 0.02), 0.7, 1.0))
 
@@ -148,6 +194,7 @@ for d in range(NUM_DAYS):
             good_count = int(total_count * qual)
             scrap_count = total_count - good_count
 
+            # operador do turno + produto aleatório
             ops_shift = operators[operators["shift_id"] == shift["shift_id"]]
             operator_id = ops_shift["operator_id"].sample(1).iloc[0]
             product_id = products["product_id"].sample(1).iloc[0]
@@ -184,7 +231,9 @@ for d in range(NUM_DAYS):
 production_runs = pd.DataFrame(prod_rows)
 downtime_events = pd.DataFrame(event_rows)
 
+# ----------------------------------------------------------------------
 # 7) salva os CSVs (sem as colunas auxiliares "_")
+# ----------------------------------------------------------------------
 machines.drop(columns=["avail_base", "perf_base", "qual_base"]).to_csv(
     f"{OUT}/machines.csv", index=False
 )

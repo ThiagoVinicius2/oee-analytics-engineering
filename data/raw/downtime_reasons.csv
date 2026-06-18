@@ -9,3 +9,8 @@ R07,Falha elétrica,Não planejada
 R08,Falta de operador,Não planejada
 R09,Pequenas paradas,Não planejada
 R10,Limpeza,Planejada
+R11,Troca de turno,Planejada
+R12,Inspeção de qualidade,Não planejada
+R13,Falha de sensor,Não planejada
+R14,Reabastecimento,Não planejada
+R15,Calibração,Planejada

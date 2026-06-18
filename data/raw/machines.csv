@@ -5,3 +5,9 @@ M03,Prensa 1,Linha 1,20
 M04,Prensa 2,Linha 2,20
 M05,Montadora,Linha 2,8
 M06,Embaladora,Linha 2,5
+M07,Injetora A,Linha 3,15
+M08,Injetora B,Linha 3,15
+M09,Cortadeira,Linha 3,10
+M10,Soldadora,Linha 2,18
+M11,Forno,Linha 1,25
+M12,Pintura,Linha 3,30
