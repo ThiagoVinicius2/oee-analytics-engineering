@@ -1,0 +1,105 @@
+// =====================================================================
+//  Script de carga — OEE Analytics (Qlik Sense)
+//  Carrega os marts exportados do dbt/DuckDB.
+//  Modelagem limpa: sem chaves sintéticas e sem referências circulares.
+// =====================================================================
+//  Ajuste o caminho da conexão (lib://...) para a pasta onde você
+//  subiu os CSVs no Qlik.
+// =====================================================================
+
+// ----------------------- DIMENSÕES -----------------------
+
+SET ThousandSep=',';
+SET DecimalSep='.';
+
+dim_machines:
+LOAD
+    machine_id,
+    machine_name,
+    production_line,
+    ideal_cycle_time_sec
+FROM [lib://AttachedFiles/dim_machines.csv]
+(txt, codepage is 65001, embedded labels, delimiter is ',', msq);
+
+dim_products:
+LOAD
+    product_id,
+    product_name,
+    product_category
+FROM [lib://AttachedFiles/dim_products.csv]
+(txt, codepage is 65001, embedded labels, delimiter is ',', msq);
+
+// Apenas id + nome, para não criar loop com dim_shifts
+dim_operators:
+LOAD
+    operator_id,
+    operator_name
+FROM [lib://AttachedFiles/dim_operators.csv]
+(txt, codepage is 65001, embedded labels, delimiter is ',', msq);
+
+dim_shifts:
+LOAD
+    shift_id,
+    shift_name,
+    start_hour,
+    end_hour
+FROM [lib://AttachedFiles/dim_shifts.csv]
+(txt, codepage is 65001, embedded labels, delimiter is ',', msq);
+
+dim_downtime_reasons:
+LOAD
+    reason_id,
+    reason_description,
+    reason_category
+FROM [lib://AttachedFiles/dim_downtime_reasons.csv]
+(txt, codepage is 65001, embedded labels, delimiter is ',', msq);
+
+// date_day renomeado para production_date, para associar com os fatos
+dim_dates:
+LOAD
+    date_day AS production_date,
+    year,
+    month,
+    day,
+    year_month,
+    month_name,
+    day_of_week,
+    is_weekend
+FROM [lib://AttachedFiles/dim_dates.csv]
+(txt, codepage is 65001, embedded labels, delimiter is ',', msq);
+
+// ------------------------- FATOS -------------------------
+
+fct_production:
+LOAD
+    run_id,
+    production_date,
+    shift_id,
+    machine_id,
+    product_id,
+    operator_id,
+    planned_time_min,
+    run_time_min,
+    downtime_min,
+    planned_downtime_min,
+    unplanned_downtime_min,
+    total_count,
+    good_count,
+    scrap_count,
+    availability,
+    performance,
+    quality,
+    oee
+FROM [lib://AttachedFiles/fct_production.csv]
+(txt, codepage is 65001, embedded labels, delimiter is ',', msq);
+
+// Liga via run_id. machine_id/production_date NÃO são carregados aqui
+// (vêm de fct_production), evitando chave sintética entre os dois fatos.
+fct_downtime:
+LOAD
+    event_id,
+    run_id,
+    reason_id,
+    duration_min
+FROM [lib://AttachedFiles/fct_downtime.csv]
+(txt, codepage is 65001, embedded labels, delimiter is ',', msq);
