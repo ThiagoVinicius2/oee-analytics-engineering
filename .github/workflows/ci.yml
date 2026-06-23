@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Gerar dados brutos (Python)
+        run: python ingestion/generate_data.py
+
+      - name: Carregar no DuckDB (camada raw)
+        run: python ingestion/load_to_duckdb.py
+
+      - name: Rodar dbt build (staging + marts + 24 testes)
+        working-directory: dbt_oee
+        run: dbt build
