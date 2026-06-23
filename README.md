@@ -1,5 +1,7 @@
 # OEE Analytics — Pipeline de Dados Industriais
 
+![CI](https://github.com/ThiagoVinicius2/oee-analytics-engineering/actions/workflows/ci.yml/badge.svg)
+
 Pipeline de dados *end-to-end* que transforma dados de produção de uma fábrica em métricas de **OEE (Overall Equipment Effectiveness)**, usando um stack moderno de Analytics Engineering: **Python + DuckDB + dbt + Qlik Sense**.
 
 > Projeto de portfólio com foco em modelagem dimensional, qualidade de dados e métricas de manufatura (Lean / Six Sigma).
